@@ -1,0 +1,67 @@
+
+addpath('./tracker/');
+
+videosrc = '/home/dragon123/videos/YouTube/';
+
+filesDir = dir(videosrc);
+sequences = {};
+for i=1:numel(filesDir)
+    name = filesDir(i).name;
+    if name(1) ~= '.', sequences{end+1} = filesDir(i).name; end
+end
+
+
+
+for t = 1 : numel(sequences)
+    
+    sequence = sequences{t};
+    
+    vdir = [videosrc '/' sequence '/videos']; 
+    videos = dir([vdir '/*.mp4']);
+    
+    save_vdir= [videosrc '/' sequence '/pairs']; 
+    if ~isdir(save_vdir)
+        mkdir(save_vdir);
+    end
+    
+    for vi = 1 : numel(videos)    
+        
+        vname =  videos(vi).name;
+        videoname = [ vdir '/' vname];
+        vfname = vname(1:end-4);
+        pairdir = [save_vdir '/' vfname];
+        if ~isdir(pairdir)
+            mkdir(pairdir);
+        end
+        imgpairdir = [pairdir '/imgs' ];
+        if ~isdir(imgpairdir)
+            mkdir(imgpairdir);
+        end
+        
+        cmd1 = ['./release/DenseTrackStab ' videoname ' ' pairdir ];
+        system(cmd1);
+        cmd2 = ['./calbbox ' pairdir];
+        system(cmd2);
+        cmd3 = ['./release/Video ' videoname ' ' pairdir];
+        system(cmd3);
+        
+        genPairsbyTrack(pairdir);
+        
+        cmd4 = ['rm -rf ' imgpairdir];
+        system(cmd4);
+        
+        cmd5 = ['mv ' pairdir '/prunebbox2.txt ' pairdir '/pairs'];
+        system(cmd5);
+        
+        cmd6 = ['rm -rf ' pairdir '/*.txt'];
+        system(cmd6);
+        
+    end
+    
+end
+
+
+
+
+
+
